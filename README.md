@@ -2,6 +2,12 @@
 
 A Windows desktop usage indicator built with Tauri, React, and TypeScript.
 
+## Codex account connection
+
+Sign in to the Codex Windows app with ChatGPT, then open UsagePin's **Settings → Account connection** and select **Check connection / Refresh**. UsagePin reads the existing session from `CODEX_HOME/auth.json`, or `%USERPROFILE%\.codex\auth.json` by default, and fetches the remaining quota and reset times directly from Codex. The session file is read only; access tokens stay in the Rust backend.
+
+The default refresh interval is 60 seconds and can be changed in Settings. On connection errors, previously fetched quota is marked as stale. If the session expires, open Codex to update the session or sign in again, then check the connection. API-key sessions and sessions stored only in Windows Credential Manager are not supported in this version.
+
 ## Development setup
 
 Install Node.js, Rust (MSVC toolchain), Microsoft Visual C++ Build Tools, and the Windows SDK. Then run:
