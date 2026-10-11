@@ -1,10 +1,14 @@
-name: Build
+name: Build and Release
 
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   windows-build:
@@ -17,5 +21,51 @@ jobs:
           cache: npm
       - uses: dtolnay/rust-toolchain@stable
       - run: npm ci
-      - run: npm run build
-      - run: cargo check --manifest-path backend/Cargo.toml
+      - name: Build standalone Windows executable
+        run: npm run tauri -- build --no-bundle --ci
+      - name: Verify standalone executable starts
+        shell: pwsh
+        run: |
+          $smokeDirectory = Join-Path $env:RUNNER_TEMP 'usagepin-smoke'
+          New-Item -ItemType Directory -Path $smokeDirectory -Force | Out-Null
+          Copy-Item backend/target/release/usagepin.exe (Join-Path $smokeDirectory 'UsagePin.exe')
+          $process = Start-Process -FilePath (Join-Path $smokeDirectory 'UsagePin.exe') -WorkingDirectory $smokeDirectory -WindowStyle Hidden -PassThru
+          try {
+            if ($process.WaitForExit(10000)) {
+              throw "UsagePin exited during startup with code $($process.ExitCode)."
+            }
+          } finally {
+            if (-not $process.HasExited) { Stop-Process -Id $process.Id -Force }
+          }
+          New-Item -ItemType Directory -Path release -Force | Out-Null
+          Copy-Item (Join-Path $smokeDirectory 'UsagePin.exe') release/UsagePin.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: UsagePin-windows-x64
+          path: release/UsagePin.exe
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: windows-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: UsagePin-windows-x64
+          path: release
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" release/UsagePin.exe --clobber
+          else
+            gh release create "$RELEASE_TAG" release/UsagePin.exe \
+              --verify-tag --title "UsagePin $RELEASE_TAG" \
+              --notes "Download UsagePin.exe and run it directly on Windows x64. Microsoft Edge WebView2 Runtime is required."
+          fi
