@@ -7,28 +7,17 @@ import { useClickThrough } from "./shared/useClickThrough";
 import { MaterialIcon } from "./shared/MaterialIcon";
 import { useCompactView } from "./useCompactView";
 import { useCodexUsage } from "./shared/useCodexUsage";
-<<<<<<< HEAD
 import { providerNames, useUsageProvider } from "./shared/useUsageProvider";
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
 import { useRefreshInterval } from "./shared/useRefreshInterval";
 import { useUsageShakeSetting } from "./shared/useUsageShakeSetting";
 import { useUsageDeductionSetting } from "./shared/useUsageDeductionSetting";
 import { isUsageStale, latestUsageDeductions, quotaLabel, refreshCountdownLabel, resetLabel, sameUsageIdentity, usageSpikeIds, usageStatusLabel } from "./shared/codexUsage";
-<<<<<<< HEAD
 import type { UsageSnapshot, UsageWindow } from "./shared/codexUsage";
 import "./App.css";
 
 function UsagePin() {
   const { usageProvider } = useUsageProvider();
   const { usage, now, connectionError } = useCodexUsage(usageProvider);
-=======
-import type { UsageSnapshot } from "./shared/codexUsage";
-import "./App.css";
-
-function UsagePin() {
-  const { usage, now, connectionError } = useCodexUsage();
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
   const { usageShakeEnabled } = useUsageShakeSetting();
   const { usageDeductionEnabled } = useUsageDeductionSetting();
   const previousUsage = useRef<UsageSnapshot | null>(null);
@@ -36,14 +25,10 @@ function UsagePin() {
   const usageTracks = useRef(new Map<string, HTMLDivElement>());
   useRefreshInterval();
   const stale = isUsageStale(usage, now);
-<<<<<<< HEAD
   const usageRows: UsageWindow[] = usage.windows.length ? usage.windows : usageProvider === "antigravity" ? [
     { id: "gemini-weekly", label: "Gemini", remainingPercent: null, windowSeconds: 604800, resetsAt: null },
     { id: "3p-weekly", label: "Claude/GPT", remainingPercent: null, windowSeconds: 604800, resetsAt: null },
   ] : [
-=======
-  const usageRows = usage.windows.length ? usage.windows : [
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
     { id: "primary", remainingPercent: null, windowSeconds: null, resetsAt: null },
     { id: "secondary", remainingPercent: null, windowSeconds: null, resetsAt: null },
   ];
@@ -125,11 +110,7 @@ function UsagePin() {
         void getCurrentWindow().startDragging();
       }}
     >
-<<<<<<< HEAD
       <section className="usage-pin" aria-label={`UsagePin ${providerNames[usageProvider]} usage`}>
-=======
-      <section className="usage-pin" aria-label="UsagePin Codex usage">
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
         <header className="card-header" id="usage-card-header" aria-hidden={compact} inert={compact}>
           <div className="brand-lockup">
             <button
@@ -142,11 +123,7 @@ function UsagePin() {
             />
             <div className="brand-copy">
               <span className="brand-name">UsagePin</span>
-<<<<<<< HEAD
               <span className="brand-caption">{providerNames[usageProvider].toUpperCase()} USAGE</span>
-=======
-              <span className="brand-caption">CODEX USAGE</span>
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
             </div>
           </div>
           <button
@@ -179,19 +156,11 @@ function UsagePin() {
           </button>
         </div>
 
-<<<<<<< HEAD
         <section className={`usage-list${stale ? " is-stale" : ""}${usageDeductionEnabled ? "" : " hide-deductions"}`} aria-label={stale ? "Usage remaining, last known data" : "Usage remaining"} style={{ "--usage-row-count": usageRows.length, "--usage-label-width": usageProvider === "antigravity" ? "72px" : "46px" } as CSSProperties} title={connectionError || usage.message}>
           {usageRows.map((row) => (
             <article className="usage-row" key={row.id}>
               <div className="row-main">
                 <span className="usage-label" title={[row.label, quotaLabel(row.windowSeconds)].filter(Boolean).join(" · ")}>{row.label || quotaLabel(row.windowSeconds)}</span>
-=======
-        <section className={`usage-list${stale ? " is-stale" : ""}${usageDeductionEnabled ? "" : " hide-deductions"}`} aria-label={stale ? "Usage remaining, last known data" : "Usage remaining"} style={{ "--usage-row-count": usageRows.length } as CSSProperties} title={connectionError || usage.message}>
-          {usageRows.map((row) => (
-            <article className="usage-row" key={row.id}>
-              <div className="row-main">
-                <span className="usage-label" title={quotaLabel(row.windowSeconds)}>{quotaLabel(row.windowSeconds)}</span>
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
                 <div
                   className="usage-track"
                   ref={(element) => {
@@ -199,11 +168,7 @@ function UsagePin() {
                     else usageTracks.current.delete(row.id);
                   }}
                   role="progressbar"
-<<<<<<< HEAD
                   aria-label={`${row.label ? `${row.label} ${quotaLabel(row.windowSeconds)}` : quotaLabel(row.windowSeconds)} usage remaining${stale ? ", last known data" : ""}`}
-=======
-                  aria-label={`${quotaLabel(row.windowSeconds)} usage remaining${stale ? ", last known data" : ""}`}
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-valuenow={row.remainingPercent ?? undefined}

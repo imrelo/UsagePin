@@ -6,7 +6,6 @@ import { useClickThrough } from "../shared/useClickThrough";
 import { useRefreshInterval } from "../shared/useRefreshInterval";
 import { useUsageShakeSetting } from "../shared/useUsageShakeSetting";
 import { useUsageDeductionSetting } from "../shared/useUsageDeductionSetting";
-<<<<<<< HEAD
 import { useUsageProvider } from "../shared/useUsageProvider";
 
 export function useSettings() {
@@ -16,26 +15,14 @@ export function useSettings() {
   const { usageShakeEnabled, setUsageShakeEnabled } = useUsageShakeSetting();
   const { usageDeductionEnabled, setUsageDeductionEnabled } = useUsageDeductionSetting();
   const { usageProvider, setUsageProvider } = useUsageProvider();
-=======
-
-export function useSettings() {
-  const { backgroundOpacity, setBackgroundOpacity, contentOpacity, setContentOpacity, theme, setTheme } = useAppearance();
-  const { clickThrough, toggleClickThrough: toggleMode } = useClickThrough();
-  const { refreshInterval, setRefreshInterval, refreshIntervalError } = useRefreshInterval();
-  const { usageShakeEnabled, setUsageShakeEnabled } = useUsageShakeSetting();
-  const { usageDeductionEnabled, setUsageDeductionEnabled } = useUsageDeductionSetting();
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
   const [refreshIntervalInput, setRefreshIntervalInput] = useState(String(refreshInterval));
   const [settingsClosing, setSettingsClosing] = useState(false);
   const [settingsOpening, setSettingsOpening] = useState(0);
   const [modeError, setModeError] = useState("");
   const [modeErrorVisible, setModeErrorVisible] = useState(false);
-<<<<<<< HEAD
   const [resetting, setResetting] = useState(false);
   const [resetMessage, setResetMessage] = useState("");
   const [resetError, setResetError] = useState("");
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
 
   useEffect(() => {
     setRefreshIntervalInput(String(refreshInterval));
@@ -102,7 +89,6 @@ export function useSettings() {
     }
   }
 
-<<<<<<< HEAD
   async function resetSettings() {
     setResetting(true);
     setResetMessage("");
@@ -125,8 +111,6 @@ export function useSettings() {
     }
   }
 
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
   return {
     theme,
     setTheme,
@@ -138,11 +122,8 @@ export function useSettings() {
     setUsageShakeEnabled,
     usageDeductionEnabled,
     setUsageDeductionEnabled,
-<<<<<<< HEAD
     usageProvider,
     setUsageProvider,
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
     refreshIntervalInput,
     refreshIntervalError,
     changeRefreshInterval,
@@ -154,12 +135,9 @@ export function useSettings() {
     settingsOpening,
     closeSettings: () => setSettingsClosing(true),
     toggleClickThrough,
-<<<<<<< HEAD
     resetting,
     resetMessage,
     resetError,
     resetSettings,
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
   };
 }

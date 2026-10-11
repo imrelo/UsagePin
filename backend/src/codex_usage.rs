@@ -19,10 +19,7 @@ pub enum UsageStatus {
     Connecting,
     Ready,
     MissingSession,
-<<<<<<< HEAD
     AppNotRunning,
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
     InvalidSession,
     UnsupportedAuth,
     ExpiredSession,
@@ -523,19 +520,13 @@ pub async fn refresh_codex_usage(
 pub async fn set_usage_refresh_interval(
     app: AppHandle,
     state: State<'_, UsageState>,
-<<<<<<< HEAD
     antigravity_state: State<'_, crate::antigravity_usage::UsageState>,
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
     seconds: u64,
 ) -> Result<(), String> {
     if seconds == 0 || seconds > 9_007_199_254_740_991 {
         return Err("Use a positive whole number of seconds.".to_owned());
     }
-<<<<<<< HEAD
     crate::antigravity_usage::set_refresh_interval(&app, &antigravity_state, seconds).await;
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
     let snapshot = {
         let mut inner = state.0.inner.lock().await;
         if inner.snapshot.refresh_interval_seconds == seconds {

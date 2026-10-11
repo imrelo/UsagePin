@@ -10,10 +10,7 @@ mod resize;
 mod settings;
 mod startup_layout;
 mod codex_usage;
-<<<<<<< HEAD
 mod antigravity_usage;
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
 
 #[derive(Default)]
 struct ClickThroughState(Mutex<bool>);
@@ -58,14 +55,11 @@ fn toggle_click_through(app: AppHandle) -> Result<bool, String> {
 }
 
 #[tauri::command]
-<<<<<<< HEAD
 fn reset_click_through(app: AppHandle) -> Result<(), String> {
     set_click_through(&app, false)
 }
 
 #[tauri::command]
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
 fn set_compact_view(compact: bool) {
     #[cfg(windows)]
     resize::set_compact_view(compact);
@@ -78,18 +72,11 @@ pub fn run() {
     tauri::Builder::default()
         .manage(ClickThroughState::default())
         .plugin(tauri_plugin_opener::init())
-<<<<<<< HEAD
         .invoke_handler(tauri::generate_handler![greet, toggle_click_through, get_click_through, reset_click_through, set_compact_view, settings::open_settings, codex_usage::get_codex_usage, codex_usage::refresh_codex_usage, codex_usage::set_usage_refresh_interval, antigravity_usage::get_antigravity_usage, antigravity_usage::refresh_antigravity_usage])
         .on_window_event(settings::on_window_event)
         .setup(|app| {
             codex_usage::start(app.handle())?;
             antigravity_usage::start(app.handle())?;
-=======
-        .invoke_handler(tauri::generate_handler![greet, toggle_click_through, get_click_through, set_compact_view, settings::open_settings, codex_usage::get_codex_usage, codex_usage::refresh_codex_usage, codex_usage::set_usage_refresh_interval])
-        .on_window_event(settings::on_window_event)
-        .setup(|app| {
-            codex_usage::start(app.handle())?;
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
             let main_window = app.get_webview_window("main").ok_or("UsagePin window is unavailable")?;
             startup_layout::apply(&main_window)?;
             #[cfg(windows)]

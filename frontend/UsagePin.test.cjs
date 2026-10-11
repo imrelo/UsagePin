@@ -31,11 +31,7 @@ function snapshot(revision, remaining, userId = "user-a", overrides = {}) {
 function widget() {
   const hooks = [];
   const tracks = new Map();
-<<<<<<< HEAD
   let cursor, effects, dirty, currentUsage, tree, provider = "codex";
-=======
-  let cursor, effects, dirty, currentUsage, tree;
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
   const react = {
     useRef(initial) { return hooks[cursor++] ??= { current: initial }; },
     useState(initial) {
@@ -62,10 +58,7 @@ function widget() {
     "./shared/MaterialIcon": { MaterialIcon: () => null },
     "./useCompactView": { useCompactView: () => ({ compact: false, chromeProgress: 1, resizing: false }) },
     "./shared/useCodexUsage": { useCodexUsage: () => ({ usage: currentUsage, now: 1000000, connectionError: "" }) },
-<<<<<<< HEAD
     "./shared/useUsageProvider": { useUsageProvider: () => ({ usageProvider: provider }), providerNames: { codex: "Codex", antigravity: "Antigravity" } },
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
     "./shared/useRefreshInterval": { useRefreshInterval() {} },
     "./shared/useUsageShakeSetting": { useUsageShakeSetting: () => ({ usageShakeEnabled: true }) },
     "./shared/useUsageDeductionSetting": { useUsageDeductionSetting: () => ({ usageDeductionEnabled: true }) },
@@ -82,7 +75,6 @@ function widget() {
   }
 
   return {
-<<<<<<< HEAD
     selectProvider(value) { provider = value; },
     inspect() {
       const labels = [], captions = [];
@@ -92,8 +84,6 @@ function widget() {
       });
       return { labels, captions };
     },
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
     render(usage) {
       currentUsage = usage;
       let renders = 0;
@@ -135,7 +125,6 @@ test("widget clears deductions and cancels an active shake when the user changes
   assert.deepEqual(view.render(snapshot(4, 17, "user-b")), { deductions: ["-3"], animations: 0 });
 });
 
-<<<<<<< HEAD
 test("widget displays only the chosen provider and distinct Antigravity groups", () => {
   const view = widget();
   view.render(snapshot(1, 90));
@@ -150,8 +139,6 @@ test("widget displays only the chosen provider and distinct Antigravity groups",
   assert.deepEqual(view.inspect().labels, ["Gemini", "Claude/GPT"]);
 });
 
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
 test("missing-session followed by ready starts new history for the same or a different user", () => {
   for (const userId of ["user-a", "user-b"]) {
     const view = widget();

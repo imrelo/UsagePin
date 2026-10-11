@@ -26,10 +26,7 @@ base64 = "0.22"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 tokio = { version = "1", features = ["sync", "time"] }
 httpdate = "1"
-<<<<<<< HEAD
 time = { version = "0.3", features = ["parsing"] }
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62", features = ["Win32_Foundation", "Win32_UI_HiDpi", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging"] }

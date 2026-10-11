@@ -2,7 +2,6 @@
 
 A Windows desktop usage indicator built with Tauri, React, and TypeScript.
 
-<<<<<<< HEAD
 Choose **Codex** or **Antigravity** in **Settings → Account connection → Widget displays**. The widget shows only the selected service, and remembers the choice across restarts. Reset restores Codex as the default.
 
 ## Antigravity connection
@@ -11,8 +10,6 @@ Keep the Antigravity Windows desktop app running and signed in. UsagePin discove
 
 UsagePin reads the app's quota summary with `forceRefresh=false`, following the Models & Usage UI. This is not an independent direct request to Google's quota API. If the app is closed or the connection fails, quota is cleared and the widget shows the connection state. Local session tokens stay in memory in the Rust backend and are sent only to `127.0.0.1`, with proxies and redirects disabled. No OmniRoute credentials are read, and no model or OAuth token-refresh requests are made by UsagePin. This integration currently supports the standalone desktop app; older Antigravity IDE versions may use a different API.
 
-=======
->>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
 ## Codex account connection
 
 Sign in to the Codex Windows app with ChatGPT, then open UsagePin's **Settings → Account connection** and select **Check connection / Refresh**. UsagePin reads the existing session from `CODEX_HOME/auth.json`, or `%USERPROFILE%\.codex\auth.json` by default, and fetches the remaining quota and reset times directly from Codex. The session file is read only; access tokens stay in the Rust backend.
