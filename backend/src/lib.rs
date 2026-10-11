@@ -5,6 +5,13 @@ use tauri::{
     AppHandle, Emitter, Manager,
 };
 
+#[cfg(windows)]
+mod resize;
+mod settings;
+mod startup_layout;
+mod codex_usage;
+mod antigravity_usage;
+
 #[derive(Default)]
 struct ClickThroughState(Mutex<bool>);
 
@@ -29,6 +36,13 @@ fn set_click_through(app: &AppHandle, enabled: bool) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn get_click_through(app: AppHandle) -> Result<bool, String> {
+    let state = app.state::<ClickThroughState>();
+    let current = *state.0.lock().map_err(|error| error.to_string())?;
+    Ok(current)
+}
+
+#[tauri::command]
 fn toggle_click_through(app: AppHandle) -> Result<bool, String> {
     let current = *app
         .state::<ClickThroughState>()
@@ -40,13 +54,41 @@ fn toggle_click_through(app: AppHandle) -> Result<bool, String> {
     Ok(next)
 }
 
+#[tauri::command]
+fn reset_click_through(app: AppHandle) -> Result<(), String> {
+    set_click_through(&app, false)
+}
+
+#[tauri::command]
+fn set_compact_view(compact: bool) {
+    #[cfg(windows)]
+    resize::set_compact_view(compact);
+    #[cfg(not(windows))]
+    let _ = compact;
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .manage(ClickThroughState::default())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, toggle_click_through])
+        .invoke_handler(tauri::generate_handler![greet, toggle_click_through, get_click_through, reset_click_through, set_compact_view, settings::open_settings, codex_usage::get_codex_usage, codex_usage::refresh_codex_usage, codex_usage::set_usage_refresh_interval, antigravity_usage::get_antigravity_usage, antigravity_usage::refresh_antigravity_usage])
+        .on_window_event(settings::on_window_event)
         .setup(|app| {
+            codex_usage::start(app.handle())?;
+            antigravity_usage::start(app.handle())?;
+            let main_window = app.get_webview_window("main").ok_or("UsagePin window is unavailable")?;
+            startup_layout::apply(&main_window)?;
+            #[cfg(windows)]
+            resize::install(&main_window)?;
+
+            let open_settings = MenuItem::with_id(
+                app,
+                "open-settings",
+                "Open Settings",
+                true,
+                None::<&str>,
+            )?;
             let toggle = MenuItem::with_id(
                 app,
                 "toggle-click-through",
@@ -55,13 +97,18 @@ pub fn run() {
                 None::<&str>,
             )?;
             let quit = MenuItem::with_id(app, "quit", "Quit UsagePin", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&toggle, &quit])?;
+            let menu = Menu::with_items(app, &[&open_settings, &toggle, &quit])?;
 
             let mut tray = TrayIconBuilder::new()
                 .menu(&menu)
                 .menu_on_left_click(true)
                 .tooltip("UsagePin")
                 .on_menu_event(|app, event| match event.id().as_ref() {
+                    "open-settings" => {
+                        if let Err(error) = settings::open_settings(app.clone()) {
+                            eprintln!("Could not open Settings: {error}");
+                        }
+                    }
                     "toggle-click-through" => {
                         let current = *app
                             .state::<ClickThroughState>()
@@ -81,6 +128,7 @@ pub fn run() {
             }
 
             let _tray_icon = tray.build(app)?;
+            main_window.show()?;
             Ok(())
         })
         .run(tauri::generate_context!())

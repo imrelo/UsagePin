@@ -37,4 +37,5 @@ dist-ssr
 # Rust build output
 backend/target
 backend/target-debug
+backend/webview2-runtime
 

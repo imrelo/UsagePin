@@ -1,0 +1,21 @@
+@font-face {
+  font-family: "UsagePin Material Icons";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("../assets/fonts/google-material-icons.otf") format("opentype");
+}
+
+.material-icon {
+  display: inline-block;
+  flex: 0 0 auto;
+  font-family: "UsagePin Material Icons";
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+}

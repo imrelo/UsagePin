@@ -1,0 +1,245 @@
+{
+  "checkedAt": "2026-10-11T03:40:59.022Z",
+  "results": [
+    {
+      "provider": "Cursor",
+      "url": "https://cursor.com/api/dashboard/get-current-period-usage",
+      "method": "POST",
+      "authenticated": true,
+      "source": "Cursor state.vscdb",
+      "tokenExpired": false,
+      "http": 200,
+      "contentType": "application/json; charset=utf-8",
+      "usage": {
+        "hasPlanUsage": true,
+        "billingCycleStart": "1789288021906",
+        "billingCycleEnd": "1791880021906",
+        "planUsage": {
+          "totalSpend": 409,
+          "totalPercentUsed": 100,
+          "autoPercentUsed": 100,
+          "apiPercentUsed": 100
+        },
+        "topLevelFields": [
+          "billingCycleStart",
+          "billingCycleEnd",
+          "planUsage",
+          "spendLimitUsage",
+          "displayThreshold",
+          "displayMessage",
+          "autoModelSelectedDisplayMessage",
+          "namedModelSelectedDisplayMessage",
+          "autoBucketModels"
+        ]
+      }
+    },
+    {
+      "provider": "Claude Code",
+      "url": "https://api.anthropic.com/api/oauth/usage",
+      "method": "GET",
+      "authenticated": true,
+      "source": "OAuth imported into OmniRoute; native Claude file has no access token",
+      "tokenExpired": true,
+      "http": 401,
+      "contentType": "application/json",
+      "errorFields": [
+        "type",
+        "error",
+        "request_id"
+      ]
+    },
+    {
+      "provider": "Antigravity",
+      "url": "https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota",
+      "method": "POST",
+      "authenticated": true,
+      "source": "OAuth imported into OmniRoute",
+      "tokenExpired": true,
+      "http": 401,
+      "contentType": "application/json; charset=UTF-8",
+      "errorFields": [
+        "error"
+      ]
+    },
+    {
+      "provider": "Antigravity",
+      "url": "https://daily-cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels",
+      "method": "POST",
+      "authenticated": true,
+      "source": "OAuth imported into OmniRoute",
+      "tokenExpired": true,
+      "http": 401,
+      "contentType": "application/json; charset=UTF-8",
+      "errorFields": [
+        "error"
+      ]
+    },
+    {
+      "provider": "Gemini CLI",
+      "url": "https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota",
+      "method": "POST",
+      "authenticated": true,
+      "source": "OAuth imported into 9router",
+      "tokenExpired": true,
+      "http": 401,
+      "contentType": "application/json; charset=UTF-8",
+      "errorFields": [
+        "error"
+      ]
+    },
+    {
+      "provider": "Grok candidate",
+      "url": "https://grok.com/rest/rate-limits",
+      "method": "POST",
+      "authenticated": false,
+      "source": "No Grok credentials found; Grok Bot saved credential belongs to Cursor",
+      "http": 403,
+      "contentType": "text/html; charset=UTF-8",
+      "errorFields": []
+    }
+  ],
+  "authenticatedProbe": "Completed after explicit user approval of credential reading/decryption and transmission to each named destination",
+  "unauthenticatedResults": [
+    {
+      "provider": "Claude Code",
+      "url": "https://api.anthropic.com/api/oauth/usage",
+      "method": "GET",
+      "authenticated": false,
+      "http": 401
+    },
+    {
+      "provider": "Cursor",
+      "url": "https://cursor.com/api/dashboard/get-current-period-usage",
+      "method": "POST",
+      "authenticated": false,
+      "http": 401
+    },
+    {
+      "provider": "GitHub Copilot",
+      "url": "https://api.github.com/copilot_internal/user",
+      "method": "GET",
+      "authenticated": false,
+      "http": 401
+    },
+    {
+      "provider": "Antigravity",
+      "url": "https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota",
+      "method": "POST",
+      "authenticated": false,
+      "http": 401
+    },
+    {
+      "provider": "Antigravity catalog",
+      "url": "https://daily-cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels",
+      "method": "POST",
+      "authenticated": false,
+      "http": 401
+    },
+    {
+      "provider": "Grok candidate",
+      "url": "https://grok.com/rest/rate-limits",
+      "method": "POST",
+      "authenticated": false,
+      "http": 403
+    }
+  ],
+  "credentialFindings": {
+    "claude": "Native .claude/.credentials.json has no access token; tested expired OAuth imported into OmniRoute",
+    "cursor": "Unexpired Cursor JWT from native state.vscdb; authenticated response received",
+    "antigravity": "Tested expired Google OAuth imported into OmniRoute",
+    "geminiCli": "Tested expired Google OAuth imported into 9router",
+    "copilot": "No usable GitHub token found in inspected user-folder files; no authenticated request sent",
+    "grokBot": "Inspected saved JWT has issuer https://authentication.cursor.sh; no credential sent to Grok"
+  },
+  "desktopClaudeCheck": {
+    "provider": "Claude Desktop",
+    "source": "C:/Users/mdbre/AppData/Local/Packages/Claude_pzs8sxrjxfjjc/LocalCache/Roaming/Claude/config.json",
+    "cacheField": "oauth:tokenCacheV2",
+    "currentAccountMatched": true,
+    "tokenExpired": false,
+    "tokenExpiresAt": "2026-10-11T11:46:47.231Z",
+    "scopes": [
+      "user:inference",
+      "user:file_upload",
+      "user:profile",
+      "user:sessions:claude_code"
+    ],
+    "checkedAt": "2026-10-11T03:53:04.086Z",
+    "method": "GET",
+    "url": "https://api.anthropic.com/api/oauth/usage",
+    "authenticated": true,
+    "http": 403,
+    "contentType": "application/json",
+    "errorType": "permission_error",
+    "errorMessage": "OAuth authentication is currently not allowed for this organization.",
+    "attemptStatuses": [
+      403,
+      403
+    ],
+    "webSessionInspection": {
+      "cookieFile": "Network/Cookies",
+      "readable": false,
+      "error": "EBUSY",
+      "authenticatedRequestToClaudeAiSent": false
+    }
+  },
+  "antigravityNativeCheck": {
+    "checkedAt": "2026-10-11T04:36:54.587Z",
+    "provider": "Antigravity native app",
+    "version": "2.11.0",
+    "source": "Running Antigravity language server; port discovered from native app log",
+    "transport": "loopback HTTP",
+    "method": "POST",
+    "rpc": "/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary",
+    "request": {
+      "forceRefresh": false
+    },
+    "http": 200,
+    "authentication": "Native app CSRF token obtained from loopback app configuration; used in memory only",
+    "comparison": "Both weekly remaining fractions match the user-provided Models & Usage screenshot",
+    "groups": [
+      {
+        "displayName": "Gemini Models",
+        "buckets": [
+          {
+            "bucketId": "gemini-weekly",
+            "displayName": "Weekly Limit Remaining",
+            "remainingFraction": 1,
+            "resetTime": "2026-10-18T04:30:42Z"
+          }
+        ]
+      },
+      {
+        "displayName": "Claude and GPT models",
+        "buckets": [
+          {
+            "bucketId": "3p-weekly",
+            "displayName": "Weekly Limit Remaining",
+            "remainingFraction": 1,
+            "resetTime": "2026-10-18T04:30:42Z"
+          }
+        ]
+      }
+    ],
+    "limitation": "Reads the native app quota summary with forceRefresh=false, like the observed UI implementation; does not independently verify a fresh Google backend fetch or offline operation",
+    "oauthTokenExtracted": false,
+    "modelCalled": false,
+    "loginConfigurationChanged": false
+  },
+  "desktopClaudeAudit": {
+    "profileOnlyProbe": {
+      "checkedAt": "2026-10-11T04:01:29.776Z",
+      "provider": "Claude Desktop",
+      "url": "https://api.anthropic.com/api/oauth/usage",
+      "scope": "user:profile",
+      "currentAccountMatched": true,
+      "orgMatchesLatestHistory": true,
+      "http": 403,
+      "errorType": "permission_error",
+      "errorMessage": "OAuth authentication is currently not allowed for this organization."
+    },
+    "selectedTokenOrgMatchesHistory": true,
+    "historySampleCount": 363,
+    "historyLatestNonemptyAt": "2026-09-22T15:46:10.044Z"
+  }
+}
