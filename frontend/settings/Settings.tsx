@@ -11,6 +11,10 @@ function Settings() {
   const [checkingConnection, setCheckingConnection] = useState(false);
   const [activeTab, setActiveTab] = useState<"appearance" | "account">("appearance");
   const {
+    startWithWindows,
+    setStartWithWindows,
+    startupPending,
+    startupError,
     theme,
     setTheme,
     backgroundOpacity,
@@ -75,6 +79,20 @@ function Settings() {
           <button className="settings-tab" id="settings-tab-account" type="button" role="tab" aria-selected={activeTab === "account"} aria-controls="settings-account" tabIndex={activeTab === "account" ? 0 : -1} onClick={() => setActiveTab("account")}>Account connection</button>
         </div>
         <div className="settings-content" id="settings-appearance" role="tabpanel" aria-labelledby="settings-tab-appearance" hidden={activeTab !== "appearance"}>
+        <div className="theme-setting">
+          <div className="settings-row">
+            <span className="settings-label">Start with Windows</span>
+            <button className={`mode-toggle${startWithWindows ? " is-enabled" : ""}`} type="button" aria-label="Start with Windows" aria-describedby="windows-startup-hint" aria-pressed={startWithWindows} aria-busy={startupPending} disabled={startupPending || resetting} onClick={() => { void setStartWithWindows(!startWithWindows).catch(() => {}); }}>
+              <span className="mode-dot" aria-hidden="true" />
+              <span className="mode-label">
+                <span className={!startWithWindows ? "is-current" : ""} aria-hidden={startWithWindows}>Off</span>
+                <span className={startWithWindows ? "is-current" : ""} aria-hidden={!startWithWindows}>On</span>
+              </span>
+            </button>
+          </div>
+          <p className="settings-hint" id="windows-startup-hint">Open UsagePin automatically when you sign in to Windows. Enabled by default.</p>
+          {startupError && <p className="connection-error" role="status">{startupError}</p>}
+        </div>
         <div className="theme-setting">
           <div className="settings-row">
             <span className="settings-label" id="theme-label"><MaterialIcon name="light_mode" />Theme</span>

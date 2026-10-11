@@ -11,6 +11,7 @@ mod settings;
 mod startup_layout;
 mod codex_usage;
 mod antigravity_usage;
+mod autostart;
 
 #[derive(Default)]
 struct ClickThroughState(Mutex<bool>);
@@ -72,9 +73,10 @@ pub fn run() {
     tauri::Builder::default()
         .manage(ClickThroughState::default())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, toggle_click_through, get_click_through, reset_click_through, set_compact_view, settings::open_settings, codex_usage::get_codex_usage, codex_usage::refresh_codex_usage, codex_usage::set_usage_refresh_interval, antigravity_usage::get_antigravity_usage, antigravity_usage::refresh_antigravity_usage])
+        .invoke_handler(tauri::generate_handler![greet, toggle_click_through, get_click_through, reset_click_through, set_compact_view, settings::open_settings, autostart::get_start_with_windows, autostart::set_start_with_windows, codex_usage::get_codex_usage, codex_usage::refresh_codex_usage, codex_usage::set_usage_refresh_interval, antigravity_usage::get_antigravity_usage, antigravity_usage::refresh_antigravity_usage])
         .on_window_event(settings::on_window_event)
         .setup(|app| {
+            autostart::initialize(app.handle());
             codex_usage::start(app.handle())?;
             antigravity_usage::start(app.handle())?;
             let main_window = app.get_webview_window("main").ok_or("UsagePin window is unavailable")?;

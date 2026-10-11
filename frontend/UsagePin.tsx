@@ -81,6 +81,12 @@ function UsagePin() {
     return () => window.removeEventListener("resize", updateScale);
   }, []);
 
+  useEffect(() => {
+    const preventContextMenu = (event: MouseEvent) => event.preventDefault();
+    window.addEventListener("contextmenu", preventContextMenu);
+    return () => window.removeEventListener("contextmenu", preventContextMenu);
+  }, []);
+
   async function toggleClickThrough() {
     setModeErrorVisible(false);
     try {

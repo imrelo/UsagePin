@@ -6,7 +6,7 @@ const { test } = require("node:test");
 const ts = require("typescript");
 
 function environment(saved = {}) {
-  return { storage: new Map(Object.entries(saved)), clickThrough: false, interval: 60, fail: "", windows: [] };
+  return { storage: new Map(Object.entries(saved)), clickThrough: false, interval: 60, startup: true, fail: "", windows: [] };
 }
 
 function settings(env) {
@@ -55,6 +55,12 @@ function settings(env) {
   };
   async function invoke(command, args) {
     if (command === env.fail) throw new Error("Backend unavailable");
+    if (command === "get_start_with_windows") return env.startup;
+    if (command === "set_start_with_windows") {
+      env.startup = args.enabled;
+      for (const other of env.windows) for (const listener of other.events.get("start-with-windows-changed") ?? []) listener({ payload: env.startup });
+      return env.startup;
+    }
     if (command === "get_click_through") return env.clickThrough;
     if (command === "reset_click_through") {
       env.clickThrough = false;
@@ -111,6 +117,7 @@ function preferences(value) {
     theme: value.theme, backgroundOpacity: value.backgroundOpacity, contentOpacity: value.contentOpacity,
     usageShakeEnabled: value.usageShakeEnabled, usageDeductionEnabled: value.usageDeductionEnabled,
     usageProvider: value.usageProvider,
+    startWithWindows: value.startWithWindows,
     refreshIntervalInput: value.refreshIntervalInput, clickThrough: value.clickThrough,
   };
 }
@@ -135,6 +142,7 @@ test("Reset restores every preference, synchronizes another window, and survives
     "usagepin.usage-provider": "antigravity",
   });
   env.clickThrough = true;
+  env.startup = false;
   const view = settings(env);
   const other = settings(env);
   await view.settle();
@@ -172,7 +180,7 @@ test("Reset clears invalid interval input even at defaults and sets mouse mode d
 });
 
 test("Backend reset failures show an error without success and allow a successful retry", async () => {
-  for (const command of ["reset_click_through", "set_usage_refresh_interval"]) {
+  for (const command of ["reset_click_through", "set_usage_refresh_interval", "set_start_with_windows"]) {
     const env = environment({ "usagepin.refresh-interval-seconds": "90" });
     env.clickThrough = true;
     const view = settings(env);
@@ -191,4 +199,26 @@ test("Backend reset failures show an error without success and allow a successfu
     assert.equal(result.clickThrough, false);
     assert.equal(result.refreshIntervalInput, "60");
   }
+});
+
+test("Windows startup defaults on, persists off, synchronizes and recovers from backend failures", async () => {
+  const env = environment();
+  const view = settings(env), other = settings(env);
+  assert.equal((await view.settle()).startWithWindows, true);
+  await other.settle();
+  await view.render().setStartWithWindows(false);
+  assert.equal((await view.settle()).startWithWindows, false);
+  assert.equal((await other.settle()).startWithWindows, false);
+  assert.equal((await settings(env).settle()).startWithWindows, false);
+  env.fail = "set_start_with_windows";
+  await assert.rejects(view.render().setStartWithWindows(true));
+  const failed = await view.settle();
+  assert.equal(failed.startWithWindows, false);
+  assert.equal(failed.startupPending, false);
+  assert.ok(failed.startupError);
+  env.fail = "";
+  await failed.setStartWithWindows(true);
+  const recovered = await view.settle();
+  assert.equal(recovered.startWithWindows, true);
+  assert.equal(recovered.startupError, "");
 });

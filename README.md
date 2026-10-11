@@ -4,6 +4,10 @@ A Windows desktop usage indicator built with Tauri, React, and TypeScript.
 
 Choose **Codex** or **Antigravity** in **Settings → Account connection → Widget displays**. The widget shows only the selected service, and remembers the choice across restarts. Reset restores Codex as the default.
 
+## Windows startup
+
+UsagePin starts automatically when the current Windows user signs in. This is enabled the first time you run the app. Turn **Settings → Appearance → Start with Windows** off to disable it; your choice is remembered across restarts. Reset settings enables it again. Keep the executable in a permanent location; opening it after moving it updates the startup path.
+
 ## Antigravity connection
 
 Keep the Antigravity Windows desktop app running and signed in. UsagePin discovers its local HTTP port from `%APPDATA%\Antigravity\logs\language_server.log` and reads `RetrieveUserQuotaSummary` through the app's existing local session. It displays Gemini and Claude/GPT weekly remaining quotas and reset dates. The connection check and configured refresh interval apply to Antigravity as well.
