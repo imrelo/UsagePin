@@ -6,7 +6,7 @@ The current Tauri v2 Store guide uses an unpackaged Win32 installer listing: Tau
 
 ## Store build
 
-`src-tauri/tauri.microsoftstore.conf.json` applies the Store-specific configuration:
+`backend/tauri.microsoftstore.conf.json` applies the Store-specific configuration:
 
 - NSIS installer only.
 - Offline WebView2 runtime installer, so setup does not need to download WebView2 during installation.
@@ -19,13 +19,13 @@ npm ci
 npm run store:windows
 ```
 
-The installer is generated under `src-tauri/target/release/bundle/nsis/`.
+The installer is generated under `backend/target/release/bundle/nsis/`.
 
 Tauri's NSIS installer supports silent installation with `/S`. Enter `/S` as the silent install argument in Partner Center.
 
 ## Before submitting
 
-1. Enroll in the Microsoft Store developer program, reserve the product name, and use the Partner Center product details to set the real publisher name in `src-tauri/tauri.microsoftstore.conf.json`.
+1. Enroll in the Microsoft Store developer program, reserve the product name, and use the Partner Center product details to set the real publisher name in `backend/tauri.microsoftstore.conf.json`.
 2. Replace the starter Tauri icons with final UsagePin artwork and regenerate the icon set with `npm run tauri icon <source.png>`.
 3. Implement and verify an in-app update path. Tauri's direct EXE/MSI Store route requires the app to handle its own updates.
 4. Sign the final EXE with a valid Authenticode certificate. The Store does not re-sign EXE/MSI installers.

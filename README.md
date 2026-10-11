@@ -18,6 +18,12 @@ npm run build
 npm run tauri build
 ```
 
+## Debug in VS Code
+
+Install the recommended CodeLLDB extension. In Run and Debug, select **UsagePin: Frontend + Backend**, then press **F5**. This starts Vite, builds the Rust backend, and attaches both the Rust and WebView2 debuggers. Breakpoints work in `frontend/` and `backend/src/`; **Shift+F5** stops both debug sessions.
+
+Debug builds use `backend/target-debug` inside the repository.
+
 ## Push to GitHub
 
 Create an empty GitHub repository named `UsagePin`, then set a project-local commit identity and push the `main` branch:

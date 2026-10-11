@@ -12,9 +12,19 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "UsagePin",
-        "width": 800,
-        "height": 600
+        "width": 370,
+        "height": 210,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "shadow": false,
+        "noRedirectionBitmap": true
       }
     ],
     "security": {

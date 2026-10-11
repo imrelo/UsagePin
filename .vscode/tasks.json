@@ -1,0 +1,45 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "UsagePin: start Vite",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": {
+        "base": "$tsc",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^\\s*>.*vite",
+          "endsPattern": "http://localhost:1420/"
+        }
+      }
+    },
+    {
+      "label": "UsagePin: build Rust",
+      "type": "process",
+      "command": "${env:USERPROFILE}\\.cargo\\bin\\cargo.exe",
+      "args": [
+        "build",
+        "--manifest-path=${workspaceFolder}/backend/Cargo.toml",
+        "--target-dir=${workspaceFolder}/backend/target-debug",
+        "--no-default-features"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${env:USERPROFILE}\\.cargo\\bin;${env:PATH}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "UsagePin: prepare debug",
+      "dependsOn": [
+        "UsagePin: start Vite",
+        "UsagePin: build Rust"
+      ],
+      "dependsOrder": "parallel"
+    }
+  ]
+}

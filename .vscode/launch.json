@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "UsagePin: Tauri Core (Rust)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/target-debug/debug/usagepin.exe",
+      "preLaunchTask": "UsagePin: prepare debug",
+      "cwd": "${workspaceFolder}/backend",
+      "sourceLanguages": ["rust"],
+      "env": {
+        "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": "--remote-debugging-port=9222",
+        "WEBVIEW2_USER_DATA_FOLDER": "${workspaceFolder}/backend/target-debug/webview2"
+      }
+    },
+    {
+      "name": "UsagePin: Frontend (WebView2)",
+      "type": "msedge",
+      "request": "attach",
+      "port": 9222,
+      "url": "http://localhost:1420",
+      "urlFilter": "http://localhost:1420/*",
+      "webRoot": "${workspaceFolder}",
+      "timeout": 300000
+    }
+  ],
+  "compounds": [
+    {
+      "name": "UsagePin: Frontend + Backend",
+      "configurations": [
+        "UsagePin: Tauri Core (Rust)",
+        "UsagePin: Frontend (WebView2)"
+      ],
+      "stopAll": true,
+      "presentation": {
+        "order": 0
+      }
+    }
+  ]
+}
