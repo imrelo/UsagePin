@@ -4,11 +4,20 @@ import { MaterialIcon } from "../shared/MaterialIcon";
 import { useSettings } from "./useSettings";
 import { useCodexUsage } from "../shared/useCodexUsage";
 import { isUsageStale, usageStatusLabel } from "../shared/codexUsage";
+<<<<<<< HEAD
 import { providerNames, readUsageProvider } from "../shared/useUsageProvider";
 import "./Settings.css";
 
 function Settings() {
   const [checkingConnection, setCheckingConnection] = useState(false);
+=======
+import "./Settings.css";
+
+function Settings() {
+  const { usage, now, connectionError, refreshUsage } = useCodexUsage();
+  const [checkingConnection, setCheckingConnection] = useState(false);
+  const stale = isUsageStale(usage, now);
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
   const [activeTab, setActiveTab] = useState<"appearance" | "account">("appearance");
   const {
     theme,
@@ -21,8 +30,11 @@ function Settings() {
     setUsageShakeEnabled,
     usageDeductionEnabled,
     setUsageDeductionEnabled,
+<<<<<<< HEAD
     usageProvider,
     setUsageProvider,
+=======
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
     refreshIntervalInput,
     refreshIntervalError,
     changeRefreshInterval,
@@ -34,6 +46,7 @@ function Settings() {
     settingsOpening,
     closeSettings,
     toggleClickThrough,
+<<<<<<< HEAD
     resetting,
     resetMessage,
     resetError,
@@ -41,6 +54,9 @@ function Settings() {
   } = useSettings();
   const { usage, now, connectionError, refreshUsage } = useCodexUsage(usageProvider);
   const stale = isUsageStale(usage, now);
+=======
+  } = useSettings();
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
 
   return (
     <main
@@ -165,6 +181,7 @@ function Settings() {
         </div>
         </div>
         <div className="settings-content" id="settings-account" role="tabpanel" aria-labelledby="settings-tab-account" hidden={activeTab !== "account"}>
+<<<<<<< HEAD
         <div className="provider-setting">
           <div className="settings-row">
             <label className="settings-label" htmlFor="usage-provider">Widget displays</label>
@@ -181,14 +198,26 @@ function Settings() {
         <div className="account-status">
           <div className="account-status-heading">
             <h3>{providerNames[usageProvider]} connection</h3>
+=======
+        <div className="account-status">
+          <div className="account-status-heading">
+            <h3>Codex Windows session</h3>
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
             <span className={`connection-badge${usage.status === "ready" && !stale && !connectionError ? " is-connected" : ""}`} role="status">{connectionError ? "Unavailable" : usageStatusLabel(usage, now)}</span>
           </div>
           <p className="settings-hint">{connectionError || usage.message}</p>
           <dl className="connection-details">
+<<<<<<< HEAD
             <div><dt>Account</dt><dd>{usage.account?.email ?? (usage.account ? `Signed in with ${providerNames[usageProvider]}` : "—")}</dd></div>
             {usageProvider === "codex" && <div><dt>Workspace</dt><dd>{usage.account?.accountId ?? "—"}</dd></div>}
             <div><dt>Plan</dt><dd>{usage.account?.plan ?? "—"}</dd></div>
             <div><dt>{usageProvider === "codex" ? "Session file" : "App source"}</dt><dd>{usage.sourcePath || "—"}</dd></div>
+=======
+            <div><dt>Account</dt><dd>{usage.account?.email ?? (usage.account ? "Signed in with ChatGPT" : "—")}</dd></div>
+            <div><dt>Workspace</dt><dd>{usage.account?.accountId ?? "—"}</dd></div>
+            <div><dt>Plan</dt><dd>{usage.account?.plan ?? "—"}</dd></div>
+            <div><dt>Session file</dt><dd>{usage.sourcePath || "—"}</dd></div>
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
             <div><dt>Last updated</dt><dd>{usage.updatedAt === null ? "—" : new Date(usage.updatedAt * 1000).toLocaleString()}{stale ? " (last known data)" : ""}</dd></div>
           </dl>
           <div className="connection-actions">
@@ -197,7 +226,11 @@ function Settings() {
               try { await refreshUsage(); } finally { setCheckingConnection(false); }
             }}><MaterialIcon name="refresh" />{checkingConnection || usage.refreshing ? "Checking…" : "Check connection / Refresh"}</button>
           </div>
+<<<<<<< HEAD
           <p className="settings-hint">{usageProvider === "codex" ? "Uses your existing Codex sign-in. If the session expires, open Codex and sign in again, then check the connection here." : "Keep Antigravity running and signed in. UsagePin reads the same model quota summary as Models & Usage."}</p>
+=======
+          <p className="settings-hint">Uses your existing Codex sign-in. If the session expires, open Codex and sign in again, then check the connection here.</p>
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
         </div>
         <div className="refresh-setting">
           <div className="settings-row">
@@ -224,10 +257,15 @@ function Settings() {
         </div>
         <footer className="settings-footer">
           <span className="settings-label"><MaterialIcon name="check" />Changes apply instantly</span>
+<<<<<<< HEAD
           <button className="connection-check" type="button" disabled={resetting} onClick={resetSettings} aria-label="Reset all settings to defaults">{resetting ? "Resetting…" : "Reset"}</button>
           <span className="settings-shortcut"><kbd>Esc</kbd> to close</span>
         </footer>
         {(resetMessage || resetError) && <p className={resetError ? "connection-error" : "settings-hint"} role="status">{resetError || resetMessage}</p>}
+=======
+          <span className="settings-shortcut"><kbd>Esc</kbd> to close</span>
+        </footer>
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
       </section>
     </main>
   );

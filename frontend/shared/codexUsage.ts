@@ -1,8 +1,15 @@
+<<<<<<< HEAD
 export type UsageStatus = "connecting" | "ready" | "missing_session" | "app_not_running" | "invalid_session" | "unsupported_auth" | "expired_session" | "access_denied" | "rate_limited" | "network_error" | "invalid_response";
 
 export interface UsageWindow {
   id: string;
   label?: string;
+=======
+export type UsageStatus = "connecting" | "ready" | "missing_session" | "invalid_session" | "unsupported_auth" | "expired_session" | "access_denied" | "rate_limited" | "network_error" | "invalid_response";
+
+export interface UsageWindow {
+  id: string;
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
   remainingPercent: number | null;
   windowSeconds: number | null;
   resetsAt: number | null;
@@ -72,7 +79,10 @@ export function usageStatusLabel(usage: UsageSnapshot, now = Date.now()) {
   if (isUsageStale(usage, now)) return "Stale data";
   const labels: Record<UsageStatus, string> = {
     connecting: "Connecting", ready: "Connected", missing_session: "No session",
+<<<<<<< HEAD
     app_not_running: "Open Antigravity",
+=======
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
     invalid_session: "Check session", unsupported_auth: "Unsupported session",
     expired_session: "Session expired", access_denied: "Access denied",
     rate_limited: "Waiting to retry", network_error: "Offline", invalid_response: "Unavailable",

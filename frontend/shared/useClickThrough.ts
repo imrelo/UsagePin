@@ -31,10 +31,14 @@ export function useClickThrough() {
     setClickThrough(await invoke<boolean>("toggle_click_through"));
   }
 
+<<<<<<< HEAD
   async function resetClickThrough() {
     await invoke("reset_click_through");
     setClickThrough(false);
   }
 
   return { clickThrough, toggleClickThrough, resetClickThrough };
+=======
+  return { clickThrough, toggleClickThrough };
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
 }

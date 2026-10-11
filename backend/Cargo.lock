@@ -4293,7 +4293,10 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",
+<<<<<<< HEAD
  "time",
+=======
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
  "tokio",
  "windows",
 ]

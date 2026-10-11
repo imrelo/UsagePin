@@ -33,6 +33,7 @@ export function useRefreshInterval() {
     return () => window.removeEventListener("storage", syncRefreshInterval);
   }, []);
 
+<<<<<<< HEAD
   async function resetRefreshInterval() {
     const seconds = readRefreshInterval(null);
     await invoke("set_usage_refresh_interval", { seconds });
@@ -42,4 +43,7 @@ export function useRefreshInterval() {
   }
 
   return { refreshInterval, setRefreshInterval, refreshIntervalError, resetRefreshInterval };
+=======
+  return { refreshInterval, setRefreshInterval, refreshIntervalError };
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
 }

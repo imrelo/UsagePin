@@ -242,13 +242,21 @@ body:has(> #root > .app-shell) {
 .usage-list {
   display: grid;
   flex: 1;
+<<<<<<< HEAD
   grid-template-columns: var(--usage-label-width, 46px) minmax(0, 1fr) max-content minmax(26px, max-content) max-content;
+=======
+  grid-template-columns: 46px minmax(0, 1fr) max-content minmax(26px, max-content) max-content;
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
   grid-template-rows: repeat(var(--usage-row-count, 2), minmax(0, 1fr));
   column-gap: 6px;
 }
 
 .usage-list.hide-deductions {
+<<<<<<< HEAD
   grid-template-columns: var(--usage-label-width, 46px) minmax(0, 1fr) max-content max-content;
+=======
+  grid-template-columns: 46px minmax(0, 1fr) max-content max-content;
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
 }
 
 .usage-row {
@@ -277,7 +285,11 @@ body:has(> #root > .app-shell) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+<<<<<<< HEAD
   width: var(--usage-label-width, 46px);
+=======
+  width: 46px;
+>>>>>>> b2c37d6f8050781195e3aa58c50efdd5b8c894fc
   flex: 0 0 auto;
   color: #e8e9f0;
   font-size: 13px;
