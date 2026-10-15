@@ -20,6 +20,8 @@ Sign in to the Codex Windows app with ChatGPT, then open UsagePin's **Settings �
 
 The default refresh interval is 60 seconds and can be changed in Settings. On connection errors, previously fetched quota is marked as stale. If the session expires, open Codex to update the session or sign in again, then check the connection. API-key sessions and sessions stored only in Windows Credential Manager are not supported in this version.
 
+**Settings → Account connection → Auto-activate after 5h reset** sends one short Codex request after each server-reported 5-hour quota reset while UsagePin is running. This starts the next usage window and consumes a small amount of quota. It is on by default, and Reset turns it on. A saved Off choice is remembered across restarts. The backend remembers processed reset times per account across restarts, uses the account's available model catalog, and never retries an activation request for the same reset, even after an interrupted response. Unavailable quota or a disconnected session postpones activation until a successful quota refresh. Activation status and the last attempt appear beside the toggle. This setting continues to monitor Codex when the widget displays Antigravity.
+
 ## Development setup
 
 Install Node.js, Rust (MSVC toolchain), Microsoft Visual C++ Build Tools, and the Windows SDK. Then run:

@@ -7,7 +7,7 @@
   IgnorableNamespaces="uap uap10 rescap">
   <Identity Name="Relo.UsagePin"
     Publisher="CN=30F1A696-67CD-45AB-9E89-3750813AB217"
-    Version="0.1.0.0" ProcessorArchitecture="x64" />
+    Version="0.1.2.0" ProcessorArchitecture="x64" />
   <Properties>
     <DisplayName>UsagePin</DisplayName>
     <PublisherDisplayName>Relo</PublisherDisplayName>

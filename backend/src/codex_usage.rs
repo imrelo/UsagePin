@@ -9,6 +9,7 @@ use std::{
 };
 use tauri::{AppHandle, Emitter, Manager, State};
 use tokio::sync::{Mutex, Notify};
+use crate::codex_activation::{self, ActivationSnapshot, AutoActivation};
 
 const USAGE_URL: &str = "https://chatgpt.com/backend-api/wham/usage";
 const EVENT: &str = "codex-usage-updated";
@@ -91,6 +92,7 @@ struct Inner {
     retry_delay: Duration,
     rate_limited_until: Option<Instant>,
     failures: u32,
+    auto_activation: AutoActivation,
 }
 
 struct UsageService {
@@ -317,6 +319,7 @@ impl UsageService {
                 retry_delay: Duration::ZERO,
                 rate_limited_until: None,
                 failures: 0,
+                auto_activation: AutoActivation::default(),
             }),
             auth_path,
             request_gate: Mutex::new(()),
@@ -388,10 +391,45 @@ impl UsageService {
     }
 
     async fn refresh(&self, app: &AppHandle) -> UsageSnapshot {
-        self.refresh_with(USAGE_URL, |snapshot| {
+        let snapshot = self.refresh_with(USAGE_URL, |snapshot| {
             let _ = app.emit(EVENT, snapshot);
         })
-        .await
+        .await;
+        self.activate_after_reset(codex_activation::MODELS_URL, codex_activation::RESPONSES_URL, |snapshot| {
+            let _ = app.emit(codex_activation::EVENT, snapshot);
+        }).await;
+        snapshot
+    }
+
+    async fn activate_after_reset(&self, models_url: &str, responses_url: &str, publish: impl Fn(ActivationSnapshot)) {
+        let Ok(_gate) = self.request_gate.try_lock() else { return };
+        let credentials = match read_credentials(&self.auth_path) {
+            Ok(credentials) => credentials,
+            Err(_) => return,
+        };
+        let claimed = {
+            let mut inner = self.inner.lock().await;
+            if inner.identity.as_ref() != Some(&credentials.identity) { return; }
+            let snapshot = inner.snapshot.clone();
+            match inner.auto_activation.claim(&credentials.identity, &snapshot, now_seconds()) {
+                Ok(claimed) => claimed.is_some(),
+                Err(error) => { inner.auto_activation.finish(Err(error)); false }
+            }
+        };
+        publish(self.inner.lock().await.auto_activation.snapshot.clone());
+        if !claimed { return; }
+        let result = codex_activation::send_activation(&self.client, models_url, responses_url,
+            &credentials.access_token, &credentials.account.account_id).await;
+        let completed = result.is_ok();
+        let snapshot = {
+            let mut inner = self.inner.lock().await;
+            inner.auto_activation.finish(result);
+            // Read the server's new reset time immediately after a completed request.
+            if completed { inner.last_attempt = None; }
+            inner.auto_activation.snapshot.clone()
+        };
+        publish(snapshot);
+        self.changed.notify_one();
     }
 
     async fn refresh_with(&self, url: &str, publish: impl Fn(UsageSnapshot)) -> UsageSnapshot {
@@ -484,7 +522,12 @@ pub fn start(app: &AppHandle) -> Result<(), reqwest::Error> {
         .timeout(Duration::from_secs(10))
         .user_agent(concat!("UsagePin/", env!("CARGO_PKG_VERSION")))
         .build()?;
-    let service = Arc::new(UsageService::new(client, auth_path()));
+    let mut service = UsageService::new(client, auth_path());
+    service.inner.get_mut().auto_activation = AutoActivation::load(
+        app.path().app_data_dir().map(|path| path.join("codex-auto-activation.json"))
+            .map_err(|error| error.to_string()),
+    );
+    let service = Arc::new(service);
     app.manage(UsageState(service.clone()));
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
@@ -506,6 +549,25 @@ pub fn start(app: &AppHandle) -> Result<(), reqwest::Error> {
 #[tauri::command]
 pub async fn get_codex_usage(state: State<'_, UsageState>) -> Result<UsageSnapshot, String> {
     Ok(state.0.snapshot().await)
+}
+
+#[tauri::command]
+pub async fn get_codex_auto_activation(state: State<'_, UsageState>) -> Result<ActivationSnapshot, String> {
+    Ok(state.0.inner.lock().await.auto_activation.snapshot.clone())
+}
+
+#[tauri::command]
+pub async fn set_codex_auto_activation(app: AppHandle, state: State<'_, UsageState>, enabled: bool) -> Result<ActivationSnapshot, String> {
+    let snapshot = {
+        let mut inner = state.0.inner.lock().await;
+        inner.auto_activation.set_enabled(enabled)?;
+        // Refresh before deciding whether a reset is due; do not send from cached quota.
+        inner.last_attempt = None;
+        inner.auto_activation.snapshot.clone()
+    };
+    let _ = app.emit(codex_activation::EVENT, &snapshot);
+    state.0.changed.notify_one();
+    Ok(snapshot)
 }
 
 #[tauri::command]
@@ -871,6 +933,51 @@ mod tests {
                 .expect("scheduler did not resume after refresh completion");
             assert!(next_delay > Duration::ZERO);
             assert!(next_delay <= Duration::from_secs(1));
+        });
+    }
+
+    #[test]
+    fn automatic_activation_sends_once_after_reset_and_refreshes_the_new_deadline() {
+        tauri::async_runtime::block_on(async {
+            let auth = TestAuth::new();
+            let saved_path = auth.0.with_extension("activation.json");
+            let mut activation = AutoActivation::load(Ok(saved_path.clone()));
+            activation.set_enabled(true).unwrap();
+            let client = Client::builder().no_proxy().timeout(Duration::from_secs(5)).build().unwrap();
+            let service = UsageService::new(client, auth.0.clone());
+            let credentials = read_credentials(&auth.0).unwrap_or_else(|_| panic!("test auth rejected"));
+            service.bind_account(&credentials).await;
+            {
+                let mut inner = service.inner.lock().await;
+                inner.auto_activation = activation;
+                inner.snapshot.status = UsageStatus::Ready;
+                inner.snapshot.updated_at = Some(now_seconds());
+                inner.snapshot.windows = vec![UsageWindow {
+                    id: "primary".to_owned(), remaining_percent: Some(100.0),
+                    window_seconds: Some(18_000), resets_at: Some(now_seconds() - 1),
+                }];
+                inner.last_attempt = Some(Instant::now());
+            }
+            let (url, thread) = mock_server(None, vec![
+                (200, json!({"models":[{"slug":"test-model", "visibility":"list"}]}).to_string()),
+                (200, "data: {\"type\":\"response.completed\"}\n\n".to_owned()),
+            ]);
+            service.activate_after_reset(&url, &url, |_| {}).await;
+            let requests = thread.join().unwrap();
+            assert_eq!(requests.len(), 2);
+            assert!(requests[0].starts_with("get "));
+            assert!(requests[1].starts_with("post "));
+            assert!(service.inner.lock().await.last_attempt.is_none());
+            assert!(service.inner.lock().await.auto_activation.snapshot.message.contains("completed"));
+            // A repeated refresh, a restart, and a disabled preference never send another POST.
+            service.activate_after_reset("http://unused.invalid", "http://unused.invalid", |_| {}).await;
+            service.inner.lock().await.auto_activation = AutoActivation::load(Ok(saved_path.clone()));
+            service.activate_after_reset("http://unused.invalid", "http://unused.invalid", |_| {}).await;
+            service.inner.lock().await.auto_activation.set_enabled(false).unwrap();
+            service.inner.lock().await.snapshot.windows[0].resets_at = Some(now_seconds());
+            service.activate_after_reset("http://unused.invalid", "http://unused.invalid", |_| {}).await;
+            assert!(!service.inner.lock().await.auto_activation.snapshot.enabled);
+            let _ = std::fs::remove_file(saved_path);
         });
     }
 

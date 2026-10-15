@@ -7,6 +7,10 @@
     "core:default",
     "core:event:allow-listen",
     "core:window:allow-hide",
-    "core:window:allow-start-dragging"
+    "core:window:allow-start-dragging",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://ko-fi.com/mdbrelo/?hidefeed=true&widget=true&embed=true&preview=true" }]
+    }
   ]
 }

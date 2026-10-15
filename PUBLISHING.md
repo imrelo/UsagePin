@@ -1,6 +1,6 @@
 # Microsoft Store release: MSIX x86 + x64
 
-The current release uses the **MSIX or PWA app** product reserved in Partner Center. The bundle contains native x86 and x64 packages; Windows selects the matching package and WebView2 runtime.
+The current release uses the **MSIX or PWA app** product reserved in Partner Center. The bundle contains native x86 and x64 packages; Windows selects the matching package. Both packages use the shared Microsoft Edge WebView2 Evergreen Runtime.
 
 ## Product identity
 
@@ -22,21 +22,23 @@ npm ci
 npm run store:windows
 ```
 
-`scripts/build-msix.ps1` downloads pinned WebView2 Fixed Runtime packages from Microsoft and verifies their signatures, builds each architecture with a static C runtime and locked Rust dependencies, and packs/bundles the release with MakeAppx semantic validation enabled. Only the executable, matching runtime, manifest and required icons enter each package. Downloaded runtimes and build output are ignored by Git.
+`scripts/build-msix.ps1` downloads the small WebView2 Evergreen bootstrapper from Microsoft and verifies its Microsoft Corporation signature, builds each architecture with a static C runtime and locked Rust dependencies, and packs/bundles the release with MakeAppx semantic validation enabled. Only the executable, bootstrapper, manifest and required icons enter each package. No Fixed Runtime is packaged. Downloaded installers and build output are ignored by Git.
+
+Before creating any Tauri windows, UsagePin checks whether WebView2 is available for the current Windows account. If it is missing, a native Windows notice appears while the bundled bootstrapper runs with `/silent /install`. This requires Internet access and runs without requesting elevation (per-user installation). The app waits for the installer and checks runtime availability again before opening. Failures show a native Retry/Cancel dialog. Machines that already have WebView2 skip installation. Evergreen updates are managed by Microsoft independently of UsagePin.
 
 Upload this file in **Start submission → Packages**:
 
 ```text
-backend/target/release/bundle/msix/UsagePin_0.1.0.0_x64_x86.msixbundle
+backend/target/release/bundle/msix/UsagePin_0.1.2.0_x64_x86.msixbundle
 ```
 
-Per-architecture MSIX files, MakeAppx logs and SHA256 checksums are in the same directory. To repack existing release builds, run `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -SkipBuild`.
+Per-architecture MSIX files, MakeAppx logs and SHA256 checksums are in the same directory. To repack existing release builds, run `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -SkipBuild`. This requires an executable hash recorded by a full Evergreen Store build; older Fixed Runtime executables cannot be repacked using this option. To refresh the cached bootstrapper, remove `backend/target/msix-downloads/MicrosoftEdgeWebview2Setup.exe` and run a full build.
 
 The bundle is unsigned for Store submission; Microsoft signs MSIX packages for Store distribution. Installing the upload bundle locally requires a trusted test signature or a supported development deployment workflow. MakeAppx validation does not replace Windows App Certification Kit or installed-app testing.
 
-Complete the Store listing, screenshots, support details and privacy disclosures/policy appropriate to reading an existing Codex session. The package uses the current repository icons. Before final submission, test launch, Settings/tray, resizing, refresh, upgrade and uninstall. Verify the x86 package on a clean Windows 10 32-bit machine; running it on an x64 machine is not equivalent.
+Complete the Store listing, screenshots, support details and privacy disclosures/policy appropriate to reading an existing Codex session. Disclose the WebView2 Evergreen dependency and Internet requirement for first launch on machines missing the runtime at the beginning of the Store description, and describe the first-launch installation in certification notes. The package uses the current repository icons. Before final submission, test launch, Settings/tray, resizing, refresh, upgrade and uninstall. Test the first-launch installation on a clean account/machine without WebView2, including offline failure, Retry/Cancel and blocked installation. Verify the x86 package on a clean Windows 10 32-bit machine; running it on an x64 machine is not equivalent.
 
-For later releases, keep the four-part manifest version aligned with the app version, with the Store revision component set to `0`. Refresh the pinned runtime version and official links in the script together. Windows 7 is outside this release's scope.
+For later releases, keep the four-part manifest version aligned with the app version, with the Store revision component set to `0`. Refresh and verify the cached bootstrapper before release. Windows 7 is outside this release's scope.
 
 References: [Microsoft MSIX components](https://learn.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-manual-conversion), [MakeAppx](https://learn.microsoft.com/en-us/windows/msix/package/create-app-package-with-makeappx-tool), [bundling](https://learn.microsoft.com/en-us/windows/msix/package/bundling-overview), [Store submission/signing](https://learn.microsoft.com/en-us/windows/apps/publish/get-started), [WebView2 distribution](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution).
 

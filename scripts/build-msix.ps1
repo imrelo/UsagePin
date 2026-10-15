@@ -10,12 +10,10 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $backendRoot = Join-Path $projectRoot 'backend'
 $outputRoot = Join-Path $backendRoot 'target\release\bundle\msix'
 $manifestSource = Join-Path $projectRoot 'packaging\msix\AppxManifest.xml'
-$runtimeVersion = '155.0.4283.45'
-# Fixed downloads from Microsoft's WebView2 download page. Refresh these for releases.
-$runtimeUrls = @{
-    x64 = 'https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/01b0fbd9-6ea3-4e12-818a-a71f73f3855b/Microsoft.WebView2.FixedVersionRuntime.155.0.4283.45.x64.cab'
-    x86 = 'https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/bdb15e94-cebc-476e-a5d5-ed3cbb4b3d89/Microsoft.WebView2.FixedVersionRuntime.155.0.4283.45.x86.cab'
-}
+# Microsoft's Evergreen bootstrapper selects the runtime architecture on the user's PC.
+$bootstrapperUrl = 'https://go.microsoft.com/fwlink/p/?LinkId=2124703'
+$downloadRoot = Join-Path $backendRoot 'target\msix-downloads'
+$bootstrapperPath = Join-Path $downloadRoot 'MicrosoftEdgeWebview2Setup.exe'
 $targets = @{ x64 = 'x86_64-pc-windows-msvc'; x86 = 'i686-pc-windows-msvc' }
 
 function Get-Sha256([string]$Path) {
@@ -48,64 +46,44 @@ if ($manifest.Package.Identity.Version -ne $expectedVersion) {
 }
 
 New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
+New-Item -ItemType Directory -Path $downloadRoot -Force | Out-Null
+if (!(Test-Path -LiteralPath $bootstrapperPath)) {
+    Write-Host 'Downloading the Microsoft WebView2 Evergreen bootstrapper...'
+    $ProgressPreference = 'SilentlyContinue'
+    $downloadPath = Join-Path $downloadRoot ([guid]::NewGuid().ToString('N') + '.exe')
+    Invoke-WebRequest -UseBasicParsing -Uri $bootstrapperUrl -OutFile $downloadPath -TimeoutSec 120
+    Move-Item -LiteralPath $downloadPath -Destination $bootstrapperPath
+}
+$verification = & $signTool verify /pa /v $bootstrapperPath 2>&1
+if ($LASTEXITCODE -ne 0 -or ($verification -join "`n") -notmatch 'Issued to: Microsoft Corporation') {
+    throw 'The WebView2 bootstrapper must have a valid Microsoft Corporation signature.'
+}
 $bundleStage = Join-Path $backendRoot ("target\msix-bundles\" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $bundleStage -Force | Out-Null
 foreach ($architecture in $Architectures) {
 $target = $targets[$architecture]
 $releaseRoot = Join-Path $backendRoot "target\$target\release"
-$runtimeRoot = Join-Path $backendRoot "webview2-runtime\$architecture"
-$runtimeUrl = $runtimeUrls[$architecture]
-if (!(Test-Path -LiteralPath (Join-Path $runtimeRoot 'msedgewebview2.exe'))) {
-    $downloadRoot = Join-Path $backendRoot 'target\msix-downloads'
-    New-Item -ItemType Directory -Path $downloadRoot -Force | Out-Null
-    $cabPath = Join-Path $downloadRoot "WebView2-$runtimeVersion-$architecture.cab"
-    if (!(Test-Path -LiteralPath $cabPath)) {
-        Write-Host "Downloading Microsoft WebView2 $runtimeVersion $architecture..."
-        $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -UseBasicParsing -Uri $runtimeUrl -OutFile $cabPath -TimeoutSec 600
-    }
-    $verification = & $signTool verify /pa /v $cabPath 2>&1
-    if ($LASTEXITCODE -ne 0 -or ($verification -join "`n") -notmatch 'Issued to: Microsoft Corporation') {
-        throw 'The downloaded WebView2 archive must have a valid Microsoft signature.'
-    }
-    $extractRoot = Join-Path $downloadRoot ([guid]::NewGuid().ToString('N'))
-    New-Item -ItemType Directory -Path $extractRoot | Out-Null
-    & expand.exe $cabPath '-F:*' $extractRoot | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "WebView2 extraction failed: $LASTEXITCODE" }
-    $runtimeExe = Get-ChildItem -LiteralPath $extractRoot -Filter 'msedgewebview2.exe' -Recurse |
-        Select-Object -First 1
-    if (!$runtimeExe) { throw 'The WebView2 archive did not contain msedgewebview2.exe.' }
-    New-Item -ItemType Directory -Path $runtimeRoot -Force | Out-Null
-    Get-ChildItem -LiteralPath $runtimeExe.DirectoryName -Force |
-        Copy-Item -Destination $runtimeRoot -Recurse -Force
-}
-$actualRuntime = (Get-Item -LiteralPath (Join-Path $runtimeRoot 'msedgewebview2.exe')).VersionInfo.FileVersion
-if ($actualRuntime -ne $runtimeVersion) {
-    throw "Expected WebView2 $runtimeVersion, found $actualRuntime. Refresh the runtime cache."
-}
+$executable = Join-Path $releaseRoot 'usagepin.exe'
+$evergreenStamp = Join-Path $releaseRoot 'usagepin-evergreen.sha256'
 
 Push-Location $projectRoot
 try {
     if (!$SkipBuild) {
-        $buildConfig = Get-Content -LiteralPath (Join-Path $backendRoot 'tauri.msix.conf.json') -Raw | ConvertFrom-Json
-        $buildConfig.bundle.windows.webviewInstallMode.path = "webview2-runtime/$architecture"
-        $buildConfigPath = Join-Path $backendRoot "target\msix-config-$architecture.json"
-        [IO.File]::WriteAllText($buildConfigPath, ($buildConfig | ConvertTo-Json -Depth 20), (New-Object Text.UTF8Encoding($false)))
         # Keep the C runtime inside the executable instead of requiring VC++ Redistributable.
         $savedRustFlags = [Environment]::GetEnvironmentVariable('RUSTFLAGS', 'Process')
         try {
             $env:RUSTFLAGS = "$savedRustFlags -C target-feature=+crt-static".Trim()
-            & npm.cmd run tauri -- build --no-bundle --ci --target $target --config $buildConfigPath -- --locked
+            & npm.cmd run tauri -- build --no-bundle --ci --target $target --config backend/tauri.msix.conf.json -- --locked
             if ($LASTEXITCODE -ne 0) { throw "Tauri release build failed: $LASTEXITCODE" }
+            Get-Sha256 $executable | Set-Content -LiteralPath $evergreenStamp -Encoding ASCII
         } finally {
             [Environment]::SetEnvironmentVariable('RUSTFLAGS', $savedRustFlags, 'Process')
         }
     }
-    $executable = Join-Path $releaseRoot 'usagepin.exe'
     if (!(Test-Path -LiteralPath $executable)) { throw 'Release executable not found.' }
-    $builtRuntime = Join-Path $releaseRoot "webview2-runtime\$architecture"
-    if (!(Test-Path -LiteralPath (Join-Path $builtRuntime 'msedgewebview2.exe'))) {
-        throw 'The Tauri release build must include the fixed WebView2 runtime.'
+    if (!(Test-Path -LiteralPath $evergreenStamp) -or
+        (Get-Content -LiteralPath $evergreenStamp -Raw).Trim() -ne (Get-Sha256 $executable)) {
+        throw 'Run a full Store build before using -SkipBuild; this executable is not a verified Evergreen build.'
     }
 
     # Use a fresh staging directory so a rebuild cannot include stale package files.
@@ -115,9 +93,7 @@ try {
     $manifest.Package.Identity.ProcessorArchitecture = $architecture
     $manifest.Save((Join-Path $stage 'AppxManifest.xml'))
     Copy-Item -LiteralPath $executable -Destination $stage
-    $stageRuntime = Join-Path $stage 'webview2-runtime'
-    New-Item -ItemType Directory -Path $stageRuntime | Out-Null
-    Copy-Item -LiteralPath $builtRuntime -Destination (Join-Path $stageRuntime $architecture) -Recurse
+    Copy-Item -LiteralPath $bootstrapperPath -Destination $stage
     foreach ($icon in @('StoreLogo.png', 'Square150x150Logo.png', 'Square44x44Logo.png')) {
         Copy-Item -LiteralPath (Join-Path $backendRoot "icons\$icon") -Destination $assets
     }

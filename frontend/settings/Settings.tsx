@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { MaterialIcon } from "../shared/MaterialIcon";
 import { useSettings } from "./useSettings";
 import { useCodexUsage } from "../shared/useCodexUsage";
@@ -9,8 +10,14 @@ import "./Settings.css";
 
 function Settings() {
   const [checkingConnection, setCheckingConnection] = useState(false);
+  const [supportError, setSupportError] = useState("");
+  const resetDialog = useRef<HTMLDialogElement>(null);
   const [activeTab, setActiveTab] = useState<"appearance" | "account">("appearance");
   const {
+    autoActivation,
+    setAutoActivation,
+    activationPending,
+    activationError,
     startWithWindows,
     setStartWithWindows,
     startupPending,
@@ -46,6 +53,10 @@ function Settings() {
   const { usage, now, connectionError, refreshUsage } = useCodexUsage(usageProvider);
   const stale = isUsageStale(usage, now);
 
+  useEffect(() => {
+    if (settingsClosing) resetDialog.current?.close();
+  }, [settingsClosing]);
+
   return (
     <main
       className={`settings-page${settingsClosing ? " is-closing" : ""}`}
@@ -59,6 +70,7 @@ function Settings() {
             <MaterialIcon name="close" />
           </button>
         </header>
+        <div className="settings-scroll">
         <div
           className="settings-tabs"
           data-active-tab={activeTab}
@@ -217,6 +229,22 @@ function Settings() {
           </div>
           <p className="settings-hint">{usageProvider === "codex" ? "Uses your existing Codex sign-in. If the session expires, open Codex and sign in again, then check the connection here." : "Keep Antigravity running and signed in. UsagePin reads the same model quota summary as Models & Usage."}</p>
         </div>
+        {usageProvider === "codex" && <div className="theme-setting auto-activation-setting">
+          <div className="settings-row">
+            <span className="settings-label">Auto-activate after 5h reset</span>
+            <button className={`mode-toggle${autoActivation.enabled ? " is-enabled" : ""}`} type="button" aria-label="Auto-activate after 5-hour quota reset" aria-describedby="auto-activation-hint" aria-pressed={autoActivation.enabled} aria-busy={activationPending} disabled={activationPending || resetting} onClick={() => { void setAutoActivation(!autoActivation.enabled).catch(() => {}); }}>
+              <span className="mode-dot" aria-hidden="true" />
+              <span className="mode-label">
+                <span className={!autoActivation.enabled ? "is-current" : ""} aria-hidden={autoActivation.enabled}>Off</span>
+                <span className={autoActivation.enabled ? "is-current" : ""} aria-hidden={!autoActivation.enabled}>On</span>
+              </span>
+            </button>
+          </div>
+          <p className="settings-hint" id="auto-activation-hint">Automatically start a new 5-hour window after reset. Uses a little quota.</p>
+          <p className="settings-hint" role="status">{autoActivation.message}</p>
+          {autoActivation.lastAttemptAt !== null && <p className="settings-hint">Last activation attempt: {new Date(autoActivation.lastAttemptAt * 1000).toLocaleString()}</p>}
+          {activationError && <p className="connection-error" role="status">{activationError}</p>}
+        </div>}
         <div className="refresh-setting">
           <div className="settings-row">
             <label className="settings-label" htmlFor="refresh-interval"><MaterialIcon name="refresh" />API refresh interval</label>
@@ -240,13 +268,43 @@ function Settings() {
           {refreshIntervalError && <p className="connection-error" role="status">{refreshIntervalError}</p>}
         </div>
         </div>
+        <section className="reset-setting" aria-labelledby="reset-setting-title">
+          <h3 id="reset-setting-title">Restore defaults</h3>
+          <p className="settings-hint" id="reset-setting-hint">Restore all UsagePin preferences to their default values.</p>
+          <button className="reset-button" type="button" disabled={resetting} aria-describedby="reset-setting-hint" aria-haspopup="dialog" onClick={() => resetDialog.current?.showModal()}>
+            <MaterialIcon name="refresh" />{resetting ? "Resetting…" : "Reset settings"}
+          </button>
+          {(resetMessage || resetError) && <p className={resetError ? "connection-error" : "settings-hint"} role="status">{resetError || resetMessage}</p>}
+        </section>
+        </div>
         <footer className="settings-footer">
           <span className="settings-label"><MaterialIcon name="check" />Changes apply instantly</span>
-          <button className="connection-check" type="button" disabled={resetting} onClick={resetSettings} aria-label="Reset all settings to defaults">{resetting ? "Resetting…" : "Reset"}</button>
+          <button className="support-button" type="button" title="Support UsagePin on Ko-fi. Opens in your browser." onClick={async () => {
+              setSupportError("");
+              try {
+                await openUrl("https://ko-fi.com/mdbrelo/?hidefeed=true&widget=true&embed=true&preview=true");
+              } catch {
+                setSupportError("Could not open Ko-fi. Try again.");
+              }
+            }}>Support UsagePin</button>
           <span className="settings-shortcut"><kbd>Esc</kbd> to close</span>
         </footer>
-        {(resetMessage || resetError) && <p className={resetError ? "connection-error" : "settings-hint"} role="status">{resetError || resetMessage}</p>}
+        {supportError && <p className="connection-error" role="status">{supportError}</p>}
       </section>
+      <dialog className="reset-confirmation" ref={resetDialog} aria-labelledby="reset-confirmation-title" aria-describedby="reset-confirmation-description" onKeyDown={(event) => {
+        if (event.key === "Escape") event.stopPropagation();
+      }}>
+        <span className="reset-confirmation-icon"><MaterialIcon name="warning" /></span>
+        <h3 id="reset-confirmation-title">Reset all settings?</h3>
+        <p id="reset-confirmation-description">All UsagePin preferences will return to their defaults. Your current choices will be replaced.</p>
+        <div className="reset-confirmation-actions">
+          <button className="reset-cancel" type="button" autoFocus onClick={() => resetDialog.current?.close()}>Cancel</button>
+          <button className="reset-button" type="button" disabled={resetting} onClick={() => {
+            resetDialog.current?.close();
+            void resetSettings();
+          }}>Reset settings</button>
+        </div>
+      </dialog>
     </main>
   );
 }

@@ -5,8 +5,7 @@
     "publisher": "Relo",
     "windows": {
       "webviewInstallMode": {
-        "type": "fixedRuntime",
-        "path": "webview2-runtime/x64"
+        "type": "skip"
       }
     }
   }

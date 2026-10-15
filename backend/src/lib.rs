@@ -7,9 +7,12 @@ use tauri::{
 
 #[cfg(windows)]
 mod resize;
+#[cfg(windows)]
+mod display_position;
 mod settings;
 mod startup_layout;
 mod codex_usage;
+mod codex_activation;
 mod antigravity_usage;
 mod autostart;
 
@@ -73,7 +76,7 @@ pub fn run() {
     tauri::Builder::default()
         .manage(ClickThroughState::default())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, toggle_click_through, get_click_through, reset_click_through, set_compact_view, settings::open_settings, autostart::get_start_with_windows, autostart::set_start_with_windows, codex_usage::get_codex_usage, codex_usage::refresh_codex_usage, codex_usage::set_usage_refresh_interval, antigravity_usage::get_antigravity_usage, antigravity_usage::refresh_antigravity_usage])
+        .invoke_handler(tauri::generate_handler![greet, toggle_click_through, get_click_through, reset_click_through, set_compact_view, settings::open_settings, autostart::get_start_with_windows, autostart::set_start_with_windows, codex_usage::get_codex_usage, codex_usage::refresh_codex_usage, codex_usage::set_usage_refresh_interval, codex_usage::get_codex_auto_activation, codex_usage::set_codex_auto_activation, antigravity_usage::get_antigravity_usage, antigravity_usage::refresh_antigravity_usage])
         .on_window_event(settings::on_window_event)
         .setup(|app| {
             autostart::initialize(app.handle());
@@ -83,6 +86,8 @@ pub fn run() {
             startup_layout::apply(&main_window)?;
             #[cfg(windows)]
             resize::install(&main_window)?;
+            #[cfg(windows)]
+            display_position::install(&main_window)?;
 
             let open_settings = MenuItem::with_id(
                 app,

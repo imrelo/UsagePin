@@ -6,7 +6,7 @@ const { test } = require("node:test");
 const ts = require("typescript");
 
 function environment(saved = {}) {
-  return { storage: new Map(Object.entries(saved)), clickThrough: false, interval: 60, startup: true, fail: "", windows: [] };
+  return { storage: new Map(Object.entries(saved)), clickThrough: false, interval: 60, startup: true, activation: { revision: 0, enabled: true, message: "Waiting for the next 5-hour quota reset.", lastAttemptAt: null }, activationCalls: [], fail: "", windows: [] };
 }
 
 function settings(env) {
@@ -55,6 +55,13 @@ function settings(env) {
   };
   async function invoke(command, args) {
     if (command === env.fail) throw new Error("Backend unavailable");
+    if (command === "get_codex_auto_activation") return { ...env.activation };
+    if (command === "set_codex_auto_activation") {
+      env.activationCalls.push(args.enabled);
+      env.activation = { ...env.activation, revision: env.activation.revision + 1, enabled: args.enabled };
+      for (const other of env.windows) for (const listener of other.events.get("codex-auto-activation-updated") ?? []) listener({ payload: { ...env.activation } });
+      return { ...env.activation };
+    }
     if (command === "get_start_with_windows") return env.startup;
     if (command === "set_start_with_windows") {
       env.startup = args.enabled;
@@ -118,6 +125,7 @@ function preferences(value) {
     usageShakeEnabled: value.usageShakeEnabled, usageDeductionEnabled: value.usageDeductionEnabled,
     usageProvider: value.usageProvider,
     startWithWindows: value.startWithWindows,
+    autoActivationEnabled: value.autoActivation.enabled,
     refreshIntervalInput: value.refreshIntervalInput, clickThrough: value.clickThrough,
   };
 }
@@ -143,6 +151,7 @@ test("Reset restores every preference, synchronizes another window, and survives
   });
   env.clickThrough = true;
   env.startup = false;
+  env.activation.enabled = false;
   const view = settings(env);
   const other = settings(env);
   await view.settle();
@@ -157,6 +166,7 @@ test("Reset restores every preference, synchronizes another window, and survives
   assert.ok(result.resetMessage);
   assert.equal(env.interval, 60);
   assert.equal(env.clickThrough, false);
+  assert.equal(env.activation.enabled, true);
   assert.deepEqual(preferences(await other.settle()), defaults);
   assert.deepEqual(preferences(await settings(env).settle()), defaults);
   assert.equal(env.storage.get("unrelated-data"), "keep");
@@ -180,7 +190,7 @@ test("Reset clears invalid interval input even at defaults and sets mouse mode d
 });
 
 test("Backend reset failures show an error without success and allow a successful retry", async () => {
-  for (const command of ["reset_click_through", "set_usage_refresh_interval", "set_start_with_windows"]) {
+  for (const command of ["reset_click_through", "set_usage_refresh_interval", "set_start_with_windows", "set_codex_auto_activation"]) {
     const env = environment({ "usagepin.refresh-interval-seconds": "90" });
     env.clickThrough = true;
     const view = settings(env);
@@ -199,6 +209,29 @@ test("Backend reset failures show an error without success and allow a successfu
     assert.equal(result.clickThrough, false);
     assert.equal(result.refreshIntervalInput, "60");
   }
+});
+
+test("Automatic activation defaults on, remembers an explicit Off, and reports save failures", async () => {
+  const env = environment();
+  const view = settings(env), other = settings(env);
+  assert.equal((await view.settle()).autoActivation.enabled, true);
+  await other.settle();
+  assert.deepEqual(env.activationCalls, []);
+  await view.render().setAutoActivation(false);
+  assert.equal((await view.settle()).autoActivation.enabled, false);
+  assert.equal((await other.settle()).autoActivation.enabled, false);
+  assert.equal((await settings(env).settle()).autoActivation.enabled, false);
+  env.fail = "set_codex_auto_activation";
+  await assert.rejects(view.render().setAutoActivation(true));
+  const failed = await view.settle();
+  assert.equal(failed.autoActivation.enabled, false);
+  assert.equal(failed.activationPending, false);
+  assert.ok(failed.activationError);
+  env.fail = "";
+  await failed.setAutoActivation(true);
+  const recovered = await view.settle();
+  assert.equal(recovered.autoActivation.enabled, true);
+  assert.equal(recovered.activationError, "");
 });
 
 test("Windows startup defaults on, persists off, synchronizes and recovers from backend failures", async () => {

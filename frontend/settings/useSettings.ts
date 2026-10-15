@@ -8,6 +8,7 @@ import { useUsageShakeSetting } from "../shared/useUsageShakeSetting";
 import { useUsageDeductionSetting } from "../shared/useUsageDeductionSetting";
 import { useUsageProvider } from "../shared/useUsageProvider";
 import { useStartWithWindows } from "../shared/useStartWithWindows";
+import { useCodexAutoActivation } from "../shared/useCodexAutoActivation";
 
 export function useSettings() {
   const { backgroundOpacity, setBackgroundOpacity, contentOpacity, setContentOpacity, theme, setTheme } = useAppearance();
@@ -17,6 +18,7 @@ export function useSettings() {
   const { usageDeductionEnabled, setUsageDeductionEnabled } = useUsageDeductionSetting();
   const { usageProvider, setUsageProvider } = useUsageProvider();
   const { startWithWindows, setStartWithWindows, startupPending, startupError } = useStartWithWindows();
+  const { autoActivation, setAutoActivation, activationPending, activationError } = useCodexAutoActivation();
   const [refreshIntervalInput, setRefreshIntervalInput] = useState(String(refreshInterval));
   const [settingsClosing, setSettingsClosing] = useState(false);
   const [settingsOpening, setSettingsOpening] = useState(0);
@@ -103,7 +105,7 @@ export function useSettings() {
       setUsageShakeEnabled(true);
       setUsageDeductionEnabled(true);
       setUsageProvider("codex");
-      const [, seconds] = await Promise.all([resetClickThrough(), resetRefreshInterval(), setStartWithWindows(true)]);
+      const [, seconds] = await Promise.all([resetClickThrough(), resetRefreshInterval(), setStartWithWindows(true), setAutoActivation(true)]);
       setRefreshIntervalInput(String(seconds));
       setResetMessage("Settings reset to defaults.");
     } catch {
@@ -114,6 +116,10 @@ export function useSettings() {
   }
 
   return {
+    autoActivation,
+    setAutoActivation,
+    activationPending,
+    activationError,
     startWithWindows,
     setStartWithWindows,
     startupPending,
